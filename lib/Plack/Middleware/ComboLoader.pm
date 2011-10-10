@@ -8,7 +8,7 @@ use Carp 'carp';
 
 use Plack::Request;
 use Path::Class;
-use MIME::Types;
+use Plack::MIME;
 use Try::Tiny;
 use HTTP::Throwable::Factory qw(http_throw http_exception);
 
@@ -33,14 +33,16 @@ __PACKAGE__->mk_accessors(qw( roots patterns save expires));
                     path      => 'static/css',
                     processor => sub {
                         # $_ isa Path::Class::File object
-                        JavasSript::Minify::minify( input => $_->slurp );
+                        # It is much, much better to minify as a build process
+                        # and not on demand.
+                        CSS::Minifier::minify( input => $_->slurp );
                         # This method returns a *string*
                     }
                 }
             },
             # Optional parameter to save generated files to this path:
             # If the file is there and it's not too old, it gets served.
-            # If it is too old (the expires below), it will be regenerated
+            # If it is too old (the expires below), it will be regenerated.
             save => 'static/combined',
             expires => 86400, # Keep files around for a day.
         $app;
@@ -122,8 +124,10 @@ sub call {
             }
         }
 
-        my $buffer = '';
+        my $buffer        = '';
         my $last_modified = 0;
+        my %seen_types    = ();
+
         foreach my $resource ( @resources ) {
             my $f = $dir->file($resource);
             my $stat = $f->stat;
@@ -133,6 +137,7 @@ sub call {
                 });
             }
 
+            $seen_types{ Plack::MIME->mime_type($f->basename) || 'text/plain' } = 1;
             # Set the last modified to the most recent file.
             $last_modified = $stat->mtime if $stat->mtime > $last_modified;
 
@@ -156,6 +161,12 @@ sub call {
             print $fh "$content_type\n";
             print $fh $buffer;
             $fh->close;
+        }
+
+        # We only encountered one content-type, rejoice, for we can set one
+        # sensibly!
+        if ( scalar keys %seen_types == 1 ) {
+            ( $content_type ) = keys %seen_types;
         }
         $res->content_type($content_type);
         $res->header('Last-Modified' => HTTP::Date::time2str( $last_modified ) );

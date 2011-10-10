@@ -24,7 +24,13 @@ test_psgi $loader => sub {
     subtest "simple concat" => sub {
         my $res = $server->(GET '/t1?foo.js&bar.js');
         ok($res->is_success, 'valid request');
+        is($res->content_type, 'application/javascript', 'right content type');
         is($res->content, qq{var foo = 1;\nvar bar = 2;\n}, 'right content');
+
+        $res = $server->(GET '/t1?foo.js&bar.js&plain.txt');
+        ok($res->is_success, 'valid request');
+        is($res->content_type, 'plain/text', 'right mixed content type');
+        is($res->content, qq{var foo = 1;\nvar bar = 2;\nhello\n}, 'right content');
     };
 
     subtest "missing files" => sub {
@@ -34,6 +40,7 @@ test_psgi $loader => sub {
         is($res->code, 500, 'bad request');
         is($res->content, q{400 Bad Request Invalid resource requested: `missing.js` is not available.}, 'right error message');
     };
+
 };
 
 done_testing;
