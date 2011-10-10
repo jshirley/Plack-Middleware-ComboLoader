@@ -58,7 +58,9 @@ you can do that.
 
 Use the `processor` option, you can munge your files however you wish.
 
-It passes in a 
+The sub is passed in a [Path::Class::File](http://search.cpan.org/perldoc?Path::Class::File) object, and should return a string.
+
+Whatever return value is appended to the output buffer and sent to the client.
 
 # AUTHOR
 
