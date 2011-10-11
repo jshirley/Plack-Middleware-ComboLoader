@@ -18,7 +18,7 @@ use HTTP::Throwable::Factory qw(http_throw http_exception);
 
 # ABSTRACT: Handle combination loading and processing of on-disk resources.
 
-__PACKAGE__->mk_accessors(qw( roots patterns save expires max_age));
+__PACKAGE__->mk_accessors(qw( roots save expires max_age));
 
 =head1 SYNOPSIS
 
@@ -79,6 +79,48 @@ Use the C<processor> option, you can munge your files however you wish.
 The sub is passed in a L<Path::Class::File> object, and should return a string.
 
 Whatever return value is appended to the output buffer and sent to the client.
+
+=head1 CONFIGURATION
+
+There are the following configuration settings:
+
+=over
+
+=item roots
+
+The only required parameter for anything to actually happen. This is a list
+of roots and the directories in which to look at files.
+
+    roots => {
+        'yui3' => '/var/www/builds/yui3',
+        'yui2' => '/var/www/builds/yui2',
+    }
+
+That configuration would create combo roots for yui3 and yui2, handling links
+as expected.
+
+=item max_age
+
+Specify an alternate max-age header and Expires, this defaults to 10 years out.
+
+=item save
+
+Should we save the resulting file to disk? Probably not, but sometimes a bad
+idea can be good. It's better to instead use a caching middleware or frontend.
+
+If the item exists on disk, and is not too old (see expires option below), this
+will serve the file directly.
+
+The intention is not for performance really, but for pregenerating files that
+may take a long time or external information (and a reasonable fallback).
+
+=item expires
+
+Specify how long a file on disk is valid before regenerating. If you are
+pregenerating files, make sure this is set far enough in the future they never
+grow stale.
+
+=back
 
 =cut
 
