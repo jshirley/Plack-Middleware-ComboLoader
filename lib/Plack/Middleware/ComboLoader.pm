@@ -7,16 +7,18 @@ use parent qw(Plack::Middleware);
 use Carp 'carp';
 
 use Plack::Request;
+
 use Path::Class;
 use Plack::MIME;
 use Try::Tiny;
-use HTTP::Throwable::Factory qw(http_throw http_exception);
 
-use Plack::App::File;
+use URI::Escape 'uri_escape';
+use HTTP::Date 'time2str';
+use HTTP::Throwable::Factory qw(http_throw http_exception);
 
 # ABSTRACT: Handle combination loading and processing of on-disk resources.
 
-__PACKAGE__->mk_accessors(qw( roots patterns save expires));
+__PACKAGE__->mk_accessors(qw( roots patterns save expires max_age));
 
 =head1 SYNOPSIS
 
@@ -24,6 +26,8 @@ __PACKAGE__->mk_accessors(qw( roots patterns save expires));
 
     builder {
         enable "ComboLoader",
+            # Defaults to this, goes out 10 years. 
+            max_age => 315360000,
             roots => {
                 'yui3'         => 'yui3/',
                 'yui3-gallery' => 'yui3-gallery/',
@@ -108,17 +112,26 @@ sub call {
         my $req = Plack::Request->new( $env );
         my $res = $req->new_response;
         $res->status(200);
+
         my $content_type = 'plain/text';
+        my $max_age      = $self->max_age || 315360000;
 
         if ( $self->save ) {
             my $save_dir = Path::Class::Dir->new($self->save)->subdir($path_info);
-            my $f = $save_dir->file( URI::Escape::uri_escape($env->{QUERY_STRING}) );
+            my $f = $save_dir->file( uri_escape($env->{QUERY_STRING}) );
             my $stat = $f->stat;
             my $expiry = $self->expires || 86400;
             if ( $stat && $stat->mtime + $expiry > time ) {
+                # Not sure what the best way to do this is. Looking at
+                # Plack::App::File
                 my ( $content_type, @buffer ) = $f->slurp;
-                $res->header('Last-Modified'  => HTTP::Date::time2str( $stat->mtime ));
-                $res->header('X-Generated-On' => HTTP::Date::time2str( $stat->mtime ));
+                $res->header('Last-Modified'  => time2str( $stat->mtime ));
+                $res->header('X-Generated-On' => time2str( $stat->mtime ));
+
+                $res->header('Age' => 0);
+                $res->header('Cache-Control' => "public, max-age=$max_age");
+                $res->header('Expires' => time2str( time + $max_age ) );
+
                 $res->content_type($content_type);
                 $res->content(join("", @buffer));
                 return $res->finalize;
@@ -157,7 +170,7 @@ sub call {
         if ( $self->save ) {
             my $save_dir = Path::Class::Dir->new($self->save)->subdir($path_info);
             $save_dir->mkpath;
-            my $f = $save_dir->file( URI::Escape::uri_escape($env->{QUERY_STRING}) );
+            my $f = $save_dir->file( uri_escape($env->{QUERY_STRING}) );
             my $fh = $f->openw;
             print $fh "$content_type\n";
             print $fh $buffer;
@@ -169,8 +182,14 @@ sub call {
         if ( scalar keys %seen_types == 1 ) {
             ( $content_type ) = keys %seen_types;
         }
+
         $res->content_type($content_type);
-        $res->header('Last-Modified' => HTTP::Date::time2str( $last_modified ) );
+
+        $res->header('Last-Modified' => time2str( $last_modified ) );
+        $res->header('Age' => 0);
+        $res->header('Cache-Control' => "public, max-age=$max_age");
+        $res->header('Expires' => time2str( time + $max_age ) );
+
         $res->content($buffer);
         return $res->finalize;
     }

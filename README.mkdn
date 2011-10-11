@@ -12,6 +12,8 @@ version 0.01
 
     builder {
         enable "ComboLoader",
+            # Defaults to this, goes out 10 years. 
+            max_age => 315360000,
             roots => {
                 'yui3'         => 'yui3/',
                 'yui3-gallery' => 'yui3-gallery/',
