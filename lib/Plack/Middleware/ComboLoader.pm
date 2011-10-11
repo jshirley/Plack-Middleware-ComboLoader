@@ -76,7 +76,9 @@ you can do that.
 
 Use the C<processor> option, you can munge your files however you wish.
 
-The sub is passed in a L<Path::Class::File> object, and should return a string.
+The sub is passed in a L<Path::Class::File> object, and should return a byte
+encoded string. Plack will require it to be byte encoded, and you will have
+incorrect results if you do not encode accordingly.
 
 Whatever return value is appended to the output buffer and sent to the client.
 
