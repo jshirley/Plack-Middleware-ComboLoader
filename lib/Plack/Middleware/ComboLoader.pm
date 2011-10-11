@@ -24,6 +24,9 @@ __PACKAGE__->mk_accessors(qw( roots save expires max_age));
 
     use Plack::Builder;
 
+    # Whatever your Plack app may be, though using this with
+    # Plack::App::File works very well!
+    my $app = [ 200, [ 'Content-Type' => 'plain/text' ], 'Hello' ];
     builder {
         enable "ComboLoader",
             # Defaults to this, goes out 10 years. 
