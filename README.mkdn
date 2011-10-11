@@ -21,14 +21,16 @@ version 0.01
                     path      => 'static/css',
                     processor => sub {
                         # $_ isa Path::Class::File object
-                        JavasSript::Minify::minify( input => $_->slurp );
+                        # It is much, much better to minify as a build process
+                        # and not on demand.
+                        CSS::Minifier::minify( input => $_->slurp );
                         # This method returns a *string*
                     }
                 }
             },
             # Optional parameter to save generated files to this path:
             # If the file is there and it's not too old, it gets served.
-            # If it is too old (the expires below), it will be regenerated
+            # If it is too old (the expires below), it will be regenerated.
             save => 'static/combined',
             expires => 86400, # Keep files around for a day.
         $app;

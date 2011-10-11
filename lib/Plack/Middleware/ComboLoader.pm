@@ -88,6 +88,7 @@ sub call {
 
     my $path_info = $env->{PATH_INFO};
     $path_info =~ s/^\///;
+
     if ( exists $roots->{$path_info} or exists $roots->{"/$path_info"} ) {
         my $path = $roots->{$path_info} || $roots->{"/$path_info"};
         my $config = {};
