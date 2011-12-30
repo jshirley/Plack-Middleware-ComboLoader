@@ -4,12 +4,15 @@ Plack::Middleware::ComboLoader - Handle combination loading and processing of on
 
 # VERSION
 
-version 0.01
+version 0.02
 
 # SYNOPSIS
 
     use Plack::Builder;
 
+    # Whatever your Plack app may be, though using this with
+    # Plack::App::File works very well!
+    my $app = [ 200, [ 'Content-Type' => 'plain/text' ], 'Hello' ];
     builder {
         enable "ComboLoader",
             # Defaults to this, goes out 10 years. 

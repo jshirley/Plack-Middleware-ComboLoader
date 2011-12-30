@@ -161,7 +161,7 @@ sub call {
         $res->status(200);
 
         my $content_type = 'plain/text';
-        my $max_age      = $self->max_age || 315360000;
+        my $max_age      = defined $self->max_age ? $self->max_age : 315360000;
 
         if ( $self->save ) {
             my $save_dir = Path::Class::Dir->new($self->save)->subdir($path_info);

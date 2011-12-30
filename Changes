@@ -1,6 +1,7 @@
 Revision history for Plack-Middleware-ComboLoader
 
 {{$NEXT}}
+  * Fix an issue where max_age => 0 didn't actually set the max-age to 0
 
 0.01 Oct 11 2011
   * First release
