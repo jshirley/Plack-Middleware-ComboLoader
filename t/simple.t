@@ -36,7 +36,7 @@ test_psgi $loader => sub {
     subtest "missing files" => sub {
         my $res = $server->(GET '/t1?foo.js&missing.js');
         is($res->code, 400, 'bad request');
-        is($res->content, q{400 Bad Request Invalid resource requested: `missing.js` is not available.}, 'right error message');
+        is($res->content, q{Invalid resource requested: `missing.js` is not available.}, 'correct message');
     };
 
 };
