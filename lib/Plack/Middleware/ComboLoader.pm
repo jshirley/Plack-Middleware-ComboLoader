@@ -14,7 +14,6 @@ use Try::Tiny;
 
 use URI::Escape 'uri_escape';
 use HTTP::Date 'time2str';
-use HTTP::Throwable::Factory qw(http_throw http_exception);
 
 # ABSTRACT: Handle combination loading and processing of on-disk resources.
 
@@ -140,6 +139,9 @@ sub call {
     my $path_info = $env->{PATH_INFO};
     $path_info =~ s/^\///;
 
+    my $req = Plack::Request->new( $env );
+    my $res = $req->new_response;
+
     if ( exists $roots->{$path_info} or exists $roots->{"/$path_info"} ) {
         my $path = $roots->{$path_info} || $roots->{"/$path_info"};
         my $config = {};
@@ -148,16 +150,15 @@ sub call {
         } else {
             $config->{path} = $path;
         }
+
         my $dir = Path::Class::Dir->new($config->{path});
         unless ( -d $dir ) {
-            http_throw( InternalServerError => {
-                message =>"Invalid root directory for `/$path_info`: $dir does not exist"
-            });
+            $res->status(500);
+            $res->body("Invalid root directory for `/$path_info`: $dir does not exist");
+            return $res->finalize;
         }
 
         my @resources = split('&', $env->{QUERY_STRING});
-        my $req = Plack::Request->new( $env );
-        my $res = $req->new_response;
         $res->status(200);
 
         my $content_type = 'plain/text';
@@ -193,9 +194,9 @@ sub call {
             my $f = $dir->file($resource);
             my $stat = $f->stat;
             unless ( defined $stat ) {
-                http_throw( BadRequest => {
-                    message => "Invalid resource requested: `$resource` is not available."
-                });
+                $res->status(400);
+                $res->content("Invalid resource requested: `$resource` is not available.");
+                return $res->finalize;
             }
 
             $seen_types{ Plack::MIME->mime_type($f->basename) || 'text/plain' } = 1;
@@ -206,9 +207,9 @@ sub call {
                 local $_ = $f;
                 try { $buffer .= $config->{processor}->($f); }
                 catch {
-                    http_throw( InternalServerError => {
-                        message => "Processing failed for `$resource`: $_"
-                    });
+                    $res->status(500);
+                    $res->body("Processing failed for `$resource`: $_");
+                    return $res->finalize;
                 };
             } else {
                 $buffer .= $f->slurp;
@@ -241,7 +242,7 @@ sub call {
         return $res->finalize;
     }
 
-    $self->app->($env);
+    return $res->finalize;
 }
 
 1;
