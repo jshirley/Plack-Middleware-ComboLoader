@@ -1,6 +1,8 @@
 Revision history for Plack-Middleware-ComboLoader
 
 {{$NEXT}}
+  * Remove http_throw which didn't make sense in Middleware. Refactor of
+    response code.
 
 0.02 Dec 30 2011
   * Fix an issue where max_age => 0 didn't actually set the max-age to 0

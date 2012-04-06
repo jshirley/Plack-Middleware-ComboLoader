@@ -35,9 +35,7 @@ test_psgi $loader => sub {
 
     subtest "missing files" => sub {
         my $res = $server->(GET '/t1?foo.js&missing.js');
-        # Don't rely on HTTPExceptiosn in the unit test, so this will come out
-        # as a 500 instead of a 400.
-        is($res->code, 500, 'bad request');
+        is($res->code, 400, 'bad request');
         is($res->content, q{400 Bad Request Invalid resource requested: `missing.js` is not available.}, 'right error message');
     };
 
