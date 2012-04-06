@@ -1,6 +1,8 @@
 Revision history for Plack-Middleware-ComboLoader
 
 {{$NEXT}}
+
+0.03 Apr 6 2012
   * Remove http_throw which didn't make sense in Middleware. Refactor of
     response code.
 
