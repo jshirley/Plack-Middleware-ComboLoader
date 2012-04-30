@@ -242,7 +242,7 @@ sub call {
         return $res->finalize;
     }
 
-    return $res->finalize;
+    $self->app->($env);
 }
 
 1;

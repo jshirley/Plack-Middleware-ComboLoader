@@ -1,6 +1,7 @@
 Revision history for Plack-Middleware-ComboLoader
 
 {{$NEXT}}
+  * Fixed the wrapping code, didn't intend to finalize. 0.03 is totally broken.
 
 0.03 Apr 6 2012
   * Remove http_throw which didn't make sense in Middleware. Refactor of
